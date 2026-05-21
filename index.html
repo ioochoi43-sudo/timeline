@@ -844,8 +844,8 @@ function openCapture(){
   // 시간 범위
   var firstMin=toMin(sorted[0].start);
   var lastMin=toMin(sorted[sorted.length-1].end);
-  var rangeStart=Math.max(0,Math.floor((firstMin-15)/30)*30);
-  var rangeEnd=Math.min(1440,Math.ceil((lastMin+15)/30)*30);
+  var rangeStart=Math.max(0,Math.floor((firstMin-15)/60)*60);
+  var rangeEnd=Math.min(1440,Math.ceil((lastMin+15)/60)*60);
   var rangeMin=rangeEnd-rangeStart;
 
   // 카드 높이 계산
@@ -859,7 +859,7 @@ function openCapture(){
 
   // PPM = 타임라인 가용픽셀 / 분 범위 → 항상 딱 맞음
   var PPM=TL_H/rangeMin;
-  var tickStep=rangeMin<=120?30:rangeMin<=300?60:120;
+  var tickStep=60;
   var AW=38;
 
   document.getElementById('cap-card').style.height=CARD_H+'px';
