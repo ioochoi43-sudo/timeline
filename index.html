@@ -415,12 +415,16 @@ function save(){
   try{
     localStorage.setItem('tl3-data', JSON.stringify(D.data));
     localStorage.setItem('tl3-cats', JSON.stringify(D.cats));
+    // pending 상태도 저장 (앱 재시작 후 복원)
+    if(D.pending) localStorage.setItem('tl3-pending', JSON.stringify(D.pending));
+    else localStorage.removeItem('tl3-pending');
   }catch(e){}
 }
 function loadData(){
   try{
     const d=localStorage.getItem('tl3-data'); if(d) D.data=JSON.parse(d);
     const c=localStorage.getItem('tl3-cats'); if(c) D.cats=JSON.parse(c);
+    const p=localStorage.getItem('tl3-pending'); if(p) D.pending=JSON.parse(p);
   }catch(e){}
   if(!D.cats.length){
     D.cats=[
@@ -559,6 +563,7 @@ function startOnly(){
   if(!task){ alert('한 일을 입력해주세요.'); return; }
   D.pending={start:start, task:task, catId:D.selCat};
   document.getElementById('f-start').value=start;
+  save(); // 백그라운드 새로고침 대비 즉시 저장
   showPending();
   renderTimeline();
 }
@@ -581,7 +586,7 @@ document.getElementById('btn-finish').onclick=function(){
   addEntry();
 };
 document.getElementById('btn-cancel-pending').onclick=function(){
-  D.pending=null; hidePending(); renderTimeline();
+  D.pending=null; save(); hidePending(); renderTimeline();
 };
 
 // =========================================
@@ -946,6 +951,8 @@ renderDate();
 refreshMainChips();
 renderTimeline();
 document.getElementById('f-start').value=nowStr();
+// 앱 재시작 시 pending 복원
+if(D.pending) showPending();
 
 setInterval(function(){
   const t=today0();
