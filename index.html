@@ -187,6 +187,14 @@ button,input,textarea{font-family:var(--font)}
 #cap-memo-area.show{display:block}
 
 .today-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#22C55E;margin-left:5px;vertical-align:middle;margin-bottom:2px}
+
+/* WAKEUP/SLEEP BAR */
+#ws-bar{flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border);padding:8px 14px;display:none;align-items:center;justify-content:space-between;gap:8px}
+#ws-bar.on{display:flex}
+.ws-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 0;border:1.5px solid var(--border);border-radius:var(--r);background:none;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;transition:all .15s;font-family:var(--font)}
+.ws-btn:active{background:var(--bg3)}
+.ws-btn.done{color:var(--text);border-color:var(--border2);background:var(--bg3)}
+.ws-time{font-size:11px;font-family:var(--mono);font-weight:400;color:var(--text3);margin-top:1px}
 </style>
 </head>
 <body>
@@ -242,6 +250,25 @@ button,input,textarea{font-family:var(--font)}
     <button class="lbtn" id="btn-finish">완료 →</button>
     <button class="lbtn dim" id="btn-cancel-pending">취소</button>
   </div>
+</div>
+
+<!-- WAKEUP / SLEEP BAR -->
+<div id="ws-bar">
+  <button class="ws-btn" id="btn-wakeup">
+    <span>🌅</span>
+    <div>
+      <div>기상</div>
+      <div class="ws-time" id="wakeup-time"></div>
+    </div>
+  </button>
+  <div style="width:1px;background:var(--border);height:32px;flex-shrink:0"></div>
+  <button class="ws-btn" id="btn-sleep">
+    <span>🌙</span>
+    <div>
+      <div>취침</div>
+      <div class="ws-time" id="sleep-time"></div>
+    </div>
+  </button>
 </div>
 
 <!-- CONTENT -->
@@ -394,7 +421,7 @@ button,input,textarea{font-family:var(--font)}
 <script>
 var HH=50;
 var D={
-  date:today0(), data:{}, cats:{}, pending:null,
+  date:today0(), data:{}, cats:{}, ws:{}, pending:null,
   editEntry:null, confirmCb:null, tab:'timeline', detEntry:null
 };
 
@@ -405,6 +432,7 @@ function save(){
   try{
     localStorage.setItem('tl4-data',JSON.stringify(D.data));
     localStorage.setItem('tl4-cats',JSON.stringify(D.cats));
+    localStorage.setItem('tl4-ws',JSON.stringify(D.ws));
     if(D.pending) localStorage.setItem('tl4-pending',JSON.stringify(D.pending));
     else localStorage.removeItem('tl4-pending');
   }catch(e){}
@@ -413,6 +441,7 @@ function loadData(){
   try{
     var d=localStorage.getItem('tl4-data'); if(d) D.data=JSON.parse(d);
     var c=localStorage.getItem('tl4-cats'); if(c) D.cats=JSON.parse(c);
+    var w=localStorage.getItem('tl4-ws'); if(w) D.ws=JSON.parse(w);
     var p=localStorage.getItem('tl4-pending'); if(p) D.pending=JSON.parse(p);
   }catch(e){}
   if(!D.cats.list||!D.cats.list.length){
@@ -480,6 +509,7 @@ document.querySelectorAll('.tab').forEach(function(btn){
     var isTimeline=D.tab==='timeline';
     document.getElementById('add-panel').style.display=isTimeline?'':'none';
     document.getElementById('pending-bar').style.display=(isTimeline&&D.pending)?'flex':'none';
+    document.getElementById('ws-bar').style.display=isTimeline?'flex':'none';
     renderAll();
   };
 });
@@ -578,48 +608,94 @@ function renderTimeline(){
   var grid=document.getElementById('tl-grid');
   var layer=document.getElementById('tl-layer');
   axis.innerHTML='';grid.innerHTML='';layer.innerHTML='';
-  for(var h=0;h<24;h++){
+
+  var ws=D.ws[dkey(D.date)]||{};
+  // 기상/취침 기준으로 표시 범위 결정
+  var startHour = ws.wakeup ? Math.floor(toMin(ws.wakeup)/60) : 0;
+  var endHour   = ws.sleep  ? Math.ceil(toMin(ws.sleep)/60)   : 24;
+  // 최소 1시간 보장
+  if(endHour <= startHour) endHour = startHour + 1;
+
+  for(var h=startHour;h<endHour;h++){
     var tr=document.createElement('div');tr.className='tl-hr';
     tr.innerHTML='<span class="tl-tick">'+pad(h)+':00</span>';
     axis.appendChild(tr);
     var gr=document.createElement('div');gr.className='tl-row';
     grid.appendChild(gr);
   }
+
+  // 분 → px 변환 (startHour 기준)
+  function minToTop(m){ return (m - startHour*60)/60*HH; }
+
   var entries=getEntries();
-  if(!entries.length&&!D.pending){
+  var hasContent=entries.length||D.pending;
+
+  if(!hasContent&&!ws.wakeup&&!ws.sleep){
     var e=document.createElement('div');e.className='tl-empty';
     e.innerHTML='<div style="font-size:28px;margin-bottom:8px">✏️</div><div style="font-size:14px">아직 기록이 없어요</div>';
     layer.appendChild(e);return;
   }
+
+  // 기상 블록
+  if(ws.wakeup){
+    var wTop=minToTop(toMin(ws.wakeup));
+    var wb=document.createElement('div');
+    wb.style.cssText='position:absolute;top:'+wTop+'px;left:5px;right:5px;z-index:3;pointer-events:none;'
+      +'display:flex;align-items:center;gap:5px;padding:3px 8px;border-radius:6px;'
+      +'background:rgba(245,158,11,.12);border-left:3px solid #F59E0B;color:#F59E0B';
+    wb.innerHTML='<span style="font-size:13px">🌅</span>'
+      +'<span style="font-size:11px;font-weight:600">기상</span>'
+      +'<span style="font-size:10px;font-family:var(--mono);opacity:.8">'+ws.wakeup+'</span>';
+    layer.appendChild(wb);
+  }
+
+  // 취침 블록
+  if(ws.sleep){
+    var sTop=minToTop(toMin(ws.sleep));
+    var sb=document.createElement('div');
+    sb.style.cssText='position:absolute;top:'+sTop+'px;left:5px;right:5px;z-index:3;pointer-events:none;'
+      +'display:flex;align-items:center;gap:5px;padding:3px 8px;border-radius:6px;'
+      +'background:rgba(129,140,248,.12);border-left:3px solid #818CF8;color:#818CF8';
+    sb.innerHTML='<span style="font-size:13px">🌙</span>'
+      +'<span style="font-size:11px;font-weight:600">취침</span>'
+      +'<span style="font-size:10px;font-family:var(--mono);opacity:.8">'+ws.sleep+'</span>';
+    layer.appendChild(sb);
+  }
+
+  // 진행 중 블록
   if(D.pending){
     var p=D.pending;var cat=getCat(p.catId);
-    var color=cat?cat.color:'#888';
-    var sm=toMin(p.start),nm=toMin(nowStr());
-    var top=(sm/60)*HH,bh=Math.max(((nm-sm)/60)*HH,20);
+    var pcolor=cat?cat.color:'#888';
+    var psm=toMin(p.start),pnm=toMin(nowStr());
+    var ptop=minToTop(psm),pbh=Math.max(((pnm-psm)/60)*HH,20);
     var pd=document.createElement('div');pd.className='tl-pend';
-    pd.style.cssText='top:'+top+'px;height:'+bh+'px;border-color:'+color+';color:'+color;
+    pd.style.cssText='top:'+ptop+'px;height:'+pbh+'px;border-color:'+pcolor+';color:'+pcolor;
     pd.innerHTML='<span class="tl-pend-lbl">'+p.task+' (진행 중)</span>';
     layer.appendChild(pd);
   }
+
+  // 기록 블록
   var sorted=[].concat(entries).sort(function(a,b){return toMin(a.start)-toMin(b.start);});
   sorted.forEach(function(entry){
     if(!entry.end)return;
     var cat=getCat(entry.catId);var color=cat?cat.color:'#888';
-    var sm=toMin(entry.start),em=toMin(entry.end),dur=Math.max(em-sm,5);
-    var top=(sm/60)*HH,bh=Math.max((dur/60)*HH,22);
+    var esm=toMin(entry.start),eem=toMin(entry.end),dur=Math.max(eem-esm,5);
+    var etop=minToTop(esm),bh=Math.max((dur/60)*HH,22);
     var block=document.createElement('div');block.className='tl-block';
-    block.style.cssText='top:'+top+'px;height:'+bh+'px;background:'+hexA(color,.14)+';border-left:3px solid '+color+';color:'+color;
+    block.style.cssText='top:'+etop+'px;height:'+bh+'px;background:'+hexA(color,.14)+';border-left:3px solid '+color+';color:'+color;
     block.innerHTML=
       '<div class="tl-title">'+entry.task+'</div>'+
-      (bh>36?'<div class="tl-meta">'+entry.start+'–'+entry.end+' · '+fmtDur(em-sm)+'</div>':'')+
+      (bh>36?'<div class="tl-meta">'+entry.start+'–'+entry.end+' · '+fmtDur(eem-esm)+'</div>':'')+
       (bh>54&&entry.memo?'<div class="tl-memo">'+entry.memo+'</div>':'');
     block.onclick=function(){openDetail(entry);};
     layer.appendChild(block);
   });
+
+  // 현재 시간선
   var t=today0();
   if(D.date.getTime()===t.getTime()){
     var n=new Date();var nm2=n.getHours()*60+n.getMinutes();
-    var ntop=(nm2/60)*HH;
+    var ntop=minToTop(nm2);
     var nl=document.createElement('div');nl.className='now-wrap';nl.style.top=ntop+'px';
     nl.innerHTML='<div class="now-dot"></div><div class="now-bar"></div>';
     layer.appendChild(nl);
@@ -892,10 +968,66 @@ function openCapture(){
   document.getElementById('cap-modal').classList.add('on');
 }
 
+// ── WAKEUP / SLEEP ──
+function renderWS(){
+  var key=dkey(D.date);
+  var ws=D.ws[key]||{};
+  var wBtn=document.getElementById('btn-wakeup');
+  var sBtn=document.getElementById('btn-sleep');
+  var wTime=document.getElementById('wakeup-time');
+  var sTime=document.getElementById('sleep-time');
+  if(ws.wakeup){
+    wBtn.classList.add('done');
+    wTime.textContent=ws.wakeup;
+  }else{
+    wBtn.classList.remove('done');
+    wTime.textContent='';
+  }
+  if(ws.sleep){
+    sBtn.classList.add('done');
+    sTime.textContent=ws.sleep;
+  }else{
+    sBtn.classList.remove('done');
+    sTime.textContent='';
+  }
+}
+
+document.getElementById('btn-wakeup').onclick=function(){
+  var key=dkey(D.date);
+  if(!D.ws[key]) D.ws[key]={};
+  if(D.ws[key].wakeup){
+    D.confirmCb=function(){
+      D.ws[key].wakeup=null;
+      save();renderWS();renderTimeline();
+    };
+    document.getElementById('m-conf-sub').textContent='기상 기록('+D.ws[key].wakeup+')을 삭제할까요?';
+    openM('m-confirm');
+  } else {
+    D.ws[key].wakeup=nowStr();
+    save();renderWS();renderTimeline();
+  }
+};
+
+document.getElementById('btn-sleep').onclick=function(){
+  var key=dkey(D.date);
+  if(!D.ws[key]) D.ws[key]={};
+  if(D.ws[key].sleep){
+    D.confirmCb=function(){
+      D.ws[key].sleep=null;
+      save();renderWS();renderTimeline();
+    };
+    document.getElementById('m-conf-sub').textContent='취침 기록('+D.ws[key].sleep+')을 삭제할까요?';
+    openM('m-confirm');
+  } else {
+    D.ws[key].sleep=nowStr();
+    save();renderWS();renderTimeline();
+  }
+};
+
 // ── RENDER ALL ──
 function renderAll(){
   refreshMainChips();
-  if(D.tab==='timeline')renderTimeline();
+  if(D.tab==='timeline'){renderTimeline();renderWS();}
   else if(D.tab==='list')renderList();
   else if(D.tab==='stats')renderStats();
   else if(D.tab==='settings')renderCatList();
@@ -906,6 +1038,8 @@ loadData();
 renderDate();
 refreshMainChips();
 renderTimeline();
+renderWS();
+document.getElementById('ws-bar').classList.add('on');
 document.getElementById('f-start').value=nowStr();
 if(D.pending)showPending();
 
