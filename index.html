@@ -227,6 +227,9 @@ button,input{font-family:var(--font);cursor:pointer}
   <div style="margin-bottom:10px">
     <input type="text" class="fi notask" id="f-task" placeholder="한 일을 입력하세요" maxlength="60" style="width:100%"/>
   </div>
+  <div style="margin-bottom:10px">
+    <textarea class="fi notask" id="f-memo" placeholder="메모 (선택)" maxlength="200" style="height:60px;padding-top:10px;resize:none;line-height:1.5"></textarea>
+  </div>
   <div class="chip-row" id="chip-row"></div>
   <div class="btn-row">
     <button class="btn btn-s" id="btn-start">
@@ -258,6 +261,15 @@ button,input{font-family:var(--font);cursor:pointer}
         <div class="tl-col" id="tl-col">
           <div id="tl-grid"></div>
           <div class="tl-layer" id="tl-layer"></div>
+        </div>
+      </div>
+      <!-- 메모 영역 -->
+      <div style="margin-top:16px;padding-bottom:8px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.05em;color:var(--text3);text-transform:uppercase;margin-bottom:6px">메모</div>
+        <textarea id="memo-input" placeholder="오늘 하루 간단히 메모해요..." maxlength="300"
+          style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:14px;font-family:var(--font);padding:10px 12px;outline:none;resize:none;line-height:1.6;min-height:80px;-webkit-appearance:none"></textarea>
+        <div style="text-align:right;margin-top:4px">
+          <span id="memo-count" style="font-size:11px;color:var(--text3)">0 / 300</span>
         </div>
       </div>
     </div>
@@ -349,6 +361,7 @@ button,input{font-family:var(--font);cursor:pointer}
         </div>
       </div>
       <div class="mfield"><div class="mlabel">카테고리</div><div class="chip-row" id="e-chips"></div></div>
+      <div class="mfield"><div class="mlabel">메모</div><textarea class="minput" id="e-memo" maxlength="200" placeholder="간단히 메모해요..." style="height:80px;padding-top:10px;resize:none;line-height:1.6"></textarea></div>
     </div>
     <div class="mact">
       <button class="mact-btn mb-s" id="m-edit-cancel">취소</button>
@@ -386,6 +399,7 @@ button,input{font-family:var(--font);cursor:pointer}
       <div id="cap-sum"></div>
     </div>
     <div id="cap-tl"></div>
+    <div id="cap-memo"></div>
   </div>
 </div>
 
@@ -398,6 +412,7 @@ let D = {
   date: today0(),
   data: {},
   cats: [],
+  memos: {},   // { "YYYY-MM-DD": "메모 내용" }
   selCat: null,
   pending: null,
   editEntry: null,
@@ -415,7 +430,7 @@ function save(){
   try{
     localStorage.setItem('tl3-data', JSON.stringify(D.data));
     localStorage.setItem('tl3-cats', JSON.stringify(D.cats));
-    // pending 상태도 저장 (앱 재시작 후 복원)
+    localStorage.setItem('tl3-memos', JSON.stringify(D.memos));
     if(D.pending) localStorage.setItem('tl3-pending', JSON.stringify(D.pending));
     else localStorage.removeItem('tl3-pending');
   }catch(e){}
@@ -424,6 +439,7 @@ function loadData(){
   try{
     const d=localStorage.getItem('tl3-data'); if(d) D.data=JSON.parse(d);
     const c=localStorage.getItem('tl3-cats'); if(c) D.cats=JSON.parse(c);
+    const m=localStorage.getItem('tl3-memos'); if(m) D.memos=JSON.parse(m);
     const p=localStorage.getItem('tl3-pending'); if(p) D.pending=JSON.parse(p);
   }catch(e){}
   if(!D.cats.length){
@@ -539,16 +555,18 @@ function addEntry(){
   const start=document.getElementById('f-start').value;
   const end=document.getElementById('f-end').value;
   const task=document.getElementById('f-task').value.trim();
+  const memo=document.getElementById('f-memo').value.trim();
   if(!start||!task){ alert('시작 시간과 한 일을 입력해주세요.'); return; }
   if(end && toMin(start)>=toMin(end)){ alert('종료 시간이 시작 시간보다 늦어야 해요.'); return; }
   const key=dkey(D.date);
   if(!D.data[key]) D.data[key]=[];
-  D.data[key].push({id:''+Date.now()+Math.random(), start:start, end:end||null, task:task, catId:D.selCat});
+  D.data[key].push({id:''+Date.now()+Math.random(), start:start, end:end||null, task:task, catId:D.selCat, memo:memo||null});
   D.pending=null;
   hidePending();
   save();
   document.getElementById('f-task').value='';
   document.getElementById('f-end').value='';
+  document.getElementById('f-memo').value='';
   renderAll();
 }
 
@@ -630,7 +648,10 @@ function renderTimeline(){
     const top=(sm/60)*HH, bh=Math.max((dur/60)*HH,22);
     const block=document.createElement('div'); block.className='tl-block';
     block.style.cssText='top:'+top+'px;height:'+bh+'px;background:'+hexA(color,.14)+';border-left:3px solid '+color+';color:'+color;
-    block.innerHTML='<div class="tl-title">'+e.task+'</div>'+(bh>36?'<div class="tl-meta">'+e.start+'–'+e.end+' · '+fmtDur(em-sm)+'</div>':'');
+    block.innerHTML=
+      '<div class="tl-title">'+e.task+'</div>'+
+      (bh>36?'<div class="tl-meta">'+e.start+'–'+e.end+' · '+fmtDur(em-sm)+'</div>':'')+
+      (bh>54&&e.memo?'<div class="tl-meta" style="margin-top:2px;opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e.memo+'</div>':'');
     block.onclick=function(){ openDetail(e); };
     layer.appendChild(block);
   });
@@ -796,7 +817,8 @@ function openDetail(e){
       '<div class="det-time" style="color:'+color+'">'+e.start+(e.end?' – '+e.end:' (진행 중)')+'</div>'+
     '</div>'+
     (dur!=null?'<div class="det-dur">'+fmtDur(dur)+'</div><div style="font-size:13px;color:var(--text3);margin-bottom:12px">소요 시간</div>':'')+
-    (cat?'<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px"><div style="width:9px;height:9px;border-radius:50%;background:'+color+'"></div><span style="font-size:14px;color:var(--text2)">'+cat.name+'</span></div>':'');
+    (cat?'<div style="display:flex;align-items:center;gap:7px;margin-bottom:'+(e.memo?'10px':'4px')+'"><div style="width:9px;height:9px;border-radius:50%;background:'+color+'"></div><span style="font-size:14px;color:var(--text2)">'+cat.name+'</span></div>':'')+
+    (e.memo?'<div style="background:var(--bg3);border-radius:var(--r);padding:10px 12px;font-size:13px;color:var(--text2);line-height:1.6;white-space:pre-wrap;word-break:break-all;margin-bottom:4px">'+e.memo+'</div>':'');
   openM('m-detail');
 }
 document.getElementById('m-det-close').onclick=function(){ closeM('m-detail'); };
@@ -811,6 +833,7 @@ function openEdit(e){
   document.getElementById('e-task').value=e.task;
   document.getElementById('e-start').value=e.start;
   document.getElementById('e-end').value=e.end||'';
+  document.getElementById('e-memo').value=e.memo||'';
   renderChips('e-chips', e.catId, function(id){
     D.editEntry.catId=id;
     renderChips('e-chips', D.editEntry.catId, arguments.callee);
@@ -828,6 +851,7 @@ document.getElementById('m-edit-save').onclick=function(){
       start:document.getElementById('e-start').value||arr[i].start,
       end:document.getElementById('e-end').value||arr[i].end,
       catId:D.editEntry.catId,
+      memo:document.getElementById('e-memo').value.trim()||null,
     });
     D.data[key]=arr; save();
   }
@@ -864,8 +888,35 @@ function closeM(id){ document.getElementById(id).classList.remove('on'); }
 });
 
 // =========================================
-// CAPTURE MODAL
+// MEMO
 // =========================================
+function renderMemo(){
+  const key=dkey(D.date);
+  const ta=document.getElementById('memo-input');
+  const cnt=document.getElementById('memo-count');
+  if(!ta) return;
+  ta.value=D.memos[key]||'';
+  cnt.textContent=(ta.value.length)+' / 300';
+}
+function initMemo(){
+  const ta=document.getElementById('memo-input');
+  const cnt=document.getElementById('memo-count');
+  if(!ta) return;
+  ta.addEventListener('input',function(){
+    const key=dkey(D.date);
+    D.memos[key]=ta.value;
+    cnt.textContent=ta.value.length+' / 300';
+    save();
+  });
+  ta.addEventListener('focus',function(){
+    ta.style.borderColor='var(--border2)';
+  });
+  ta.addEventListener('blur',function(){
+    ta.style.borderColor='var(--border)';
+  });
+}
+
+
 document.getElementById('btn-export').onclick=openCapture;
 document.getElementById('cap-close').onclick=function(){
   document.getElementById('cap-modal').classList.remove('on');
@@ -925,11 +976,26 @@ function openCapture(){
     html+='<div style="position:absolute;top:'+top+'px;height:'+bh+'px;left:4px;right:4px;border-radius:6px;background:'+hexA(color,.15)+';border-left:3px solid '+color+';padding:2px 6px;overflow:hidden;display:flex;flex-direction:column;justify-content:center">'+
       '<div style="font-size:11px;font-weight:600;color:'+color+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3">'+e.task+'</div>'+
       (bh>=24?'<div style="font-size:9px;color:'+color+';opacity:.7;font-family:var(--mono);margin-top:1px">'+e.start+' – '+e.end+' · '+fmtDur(dur)+'</div>':'')+
+      (bh>=44 && e.memo?'<div style="font-size:9px;color:'+color+';opacity:.6;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e.memo+'</div>':'')+
       '</div>';
   });
   html+='</div></div>';
 
   document.getElementById('cap-tl').innerHTML=html;
+
+  // 메모 표시
+  const memo=D.memos[dkey(D.date)]||'';
+  const memoEl=document.getElementById('cap-memo');
+  if(memo){
+    memoEl.style.cssText='padding:10px 16px 14px;border-top:1px solid var(--border)';
+    memoEl.innerHTML=
+      '<div style="font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--text3);text-transform:uppercase;margin-bottom:5px">메모</div>'+
+      '<div style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;word-break:break-all">'+memo+'</div>';
+  } else {
+    memoEl.style.cssText='';
+    memoEl.innerHTML='';
+  }
+
   document.getElementById('cap-modal').classList.add('on');
 }
 
@@ -938,7 +1004,7 @@ function openCapture(){
 // =========================================
 function renderAll(){
   refreshMainChips();
-  if(D.tab==='timeline') renderTimeline();
+  if(D.tab==='timeline'){ renderTimeline(); renderMemo(); }
   else if(D.tab==='list') renderList();
   else if(D.tab==='stats') renderStats();
   else if(D.tab==='settings') renderCatList();
@@ -951,6 +1017,8 @@ loadData();
 renderDate();
 refreshMainChips();
 renderTimeline();
+renderMemo();
+initMemo();
 document.getElementById('f-start').value=nowStr();
 // 앱 재시작 시 pending 복원
 if(D.pending) showPending();
