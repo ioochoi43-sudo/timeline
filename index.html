@@ -261,6 +261,22 @@ button,input,textarea{font-family:var(--font);cursor:pointer}
         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         미리보기 열기 (스크린샷 저장)
       </button>
+      <div style="margin-top:20px">
+        <div class="sec-title">데이터 이전</div>
+        <div class="sec-box">
+          <div class="sec-row" style="flex-direction:column;align-items:stretch;gap:8px">
+            <div style="font-size:13px;color:var(--text2);line-height:1.6">기존 앱 → <b>내보내기</b> 복사 → 새 앱 → <b>가져오기</b> 붙여넣기</div>
+            <button class="exp-btn" id="btn-data-export" style="background:var(--bg3);color:var(--text);font-size:13px;padding:12px">
+              <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              내보내기 (복사)
+            </button>
+            <button class="exp-btn" id="btn-data-import" style="background:var(--bg3);color:var(--text);font-size:13px;padding:12px">
+              <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              가져오기 (붙여넣기)
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -271,6 +287,25 @@ button,input,textarea{font-family:var(--font);cursor:pointer}
   <button class="tab" data-tab="stats"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>통계</span></button>
   <button class="tab" data-tab="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>설정</span></button>
 </nav>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="mback" id="m-import">
+  <div class="msheet">
+    <div class="mhandle"></div>
+    <div class="mtitle"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>데이터 가져오기</div>
+    <div class="mbody">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:10px;line-height:1.6">내보내기로 복사한 코드를 아래에 붙여넣으세요.<br>기존 데이터에 <b>추가</b>됩니다.</div>
+      <div class="mfield">
+        <textarea class="minput ta" id="import-text" placeholder="여기에 붙여넣기..." style="height:120px;font-family:var(--mono);font-size:12px"></textarea>
+      </div>
+      <div id="import-msg" style="font-size:13px;margin-top:4px"></div>
+    </div>
+    <div class="mact">
+      <button class="mact-btn mb-s" id="m-import-cancel">취소</button>
+      <button class="mact-btn mb-p" id="m-import-ok"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>가져오기</button>
+    </div>
+  </div>
 </div>
 
 <!-- DETAIL MODAL -->
@@ -829,11 +864,78 @@ document.getElementById('m-conf-ok').onclick=function(){if(D.confirmCb){D.confir
 // ── MODALS ──
 function openM(id){document.getElementById(id).classList.add('on');}
 function closeM(id){document.getElementById(id).classList.remove('on');}
-['m-detail','m-edit','m-ws','m-confirm'].forEach(function(id){
+['m-detail','m-edit','m-ws','m-confirm','m-import'].forEach(function(id){
   document.getElementById(id).addEventListener('click',function(ev){if(ev.target===this)closeM(id);});
 });
 
-// ── CAPTURE ──
+// ── DATA EXPORT / IMPORT ──
+document.getElementById('btn-data-export').onclick=function(){
+  var payload=JSON.stringify({
+    data:D.data,
+    cats:D.cats,
+    ws:D.ws,
+    v:5
+  });
+  // 클립보드 복사
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(payload).then(function(){
+      alert('복사됐어요! 새 앱에서 가져오기를 눌러 붙여넣으세요.');
+    }).catch(function(){fallbackCopy(payload);});
+  }else{fallbackCopy(payload);}
+};
+function fallbackCopy(text){
+  var ta=document.createElement('textarea');
+  ta.value=text;ta.style.cssText='position:fixed;top:0;left:0;opacity:0';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy');alert('복사됐어요! 새 앱에서 가져오기를 눌러 붙여넣으세요.');}
+  catch(e){alert('복사 실패. 직접 텍스트를 선택해서 복사해주세요.');}
+  document.body.removeChild(ta);
+}
+
+document.getElementById('btn-data-import').onclick=function(){
+  document.getElementById('import-text').value='';
+  document.getElementById('import-msg').textContent='';
+  openM('m-import');
+};
+document.getElementById('m-import-cancel').onclick=function(){closeM('m-import');};
+document.getElementById('m-import-ok').onclick=function(){
+  var text=document.getElementById('import-text').value.trim();
+  var msg=document.getElementById('import-msg');
+  if(!text){msg.style.color='#E24B4A';msg.textContent='텍스트를 붙여넣어주세요.';return;}
+  try{
+    var parsed=JSON.parse(text);
+    if(!parsed.data||!parsed.cats){msg.style.color='#E24B4A';msg.textContent='올바른 형식이 아니에요.';return;}
+    // 기록 병합 (날짜별로 합치기)
+    var newData=parsed.data||{};
+    Object.keys(newData).forEach(function(k){
+      if(!D.data[k])D.data[k]=[];
+      // 중복 id 제거하면서 추가
+      var existIds=D.data[k].map(function(e){return e.id;});
+      var toAdd=(newData[k]||[]).filter(function(e){return existIds.indexOf(e.id)===-1;});
+      D.data[k]=D.data[k].concat(toAdd);
+    });
+    // 카테고리 병합
+    var newCats=(parsed.cats&&parsed.cats.list)||[];
+    var existCatIds=(D.cats.list||[]).map(function(c){return c.id;});
+    newCats.forEach(function(c){
+      if(existCatIds.indexOf(c.id)===-1)D.cats.list.push(c);
+    });
+    // ws 병합
+    var newWs=parsed.ws||{};
+    Object.keys(newWs).forEach(function(k){
+      if(!D.ws[k])D.ws[k]=newWs[k];
+    });
+    save();
+    msg.style.color='#22C55E';
+    msg.textContent='가져오기 완료!';
+    setTimeout(function(){closeM('m-import');renderAll();},800);
+  }catch(e){
+    msg.style.color='#E24B4A';
+    msg.textContent='오류: 올바른 형식이 아니에요.';
+  }
+};
+
+
 document.getElementById('btn-export').onclick=openCapture;
 document.getElementById('cap-close').onclick=function(){document.getElementById('cap-modal').classList.remove('on');};
 
