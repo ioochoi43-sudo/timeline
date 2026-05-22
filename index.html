@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
 <title>데일리 타임라인</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap"/>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
 :root{
   --bg:#F2F2F0;--bg2:#FFFFFF;--bg3:#EBEBEB;
@@ -151,7 +150,7 @@ button,input,textarea{font-family:var(--font);cursor:pointer}
 .db svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .drag-handle{color:var(--text3);padding:4px;display:flex;flex-shrink:0;touch-action:none}
 .drag-handle svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.cat-name-edit{flex:1;background:transparent;border:none;border-bottom:1px solid transparent;color:var(--text);font-size:14px;font-weight:500;padding:4px 2px;outline:none;font-family:var(--font)}
+.cat-name-edit{flex:1;min-width:0;background:transparent;border:none;border-bottom:1px solid transparent;color:var(--text);font-size:14px;font-weight:500;padding:4px 2px;outline:none;font-family:var(--font)}
 .exp-btn{width:100%;border:none;border-radius:var(--r-lg);font-size:14px;font-weight:600;padding:14px;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px}
 .exp-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .exp-btn.primary{background:var(--accent);color:var(--bg)}
@@ -272,12 +271,12 @@ button,input,textarea{font-family:var(--font);cursor:pointer}
       </div>
       <div class="sec-title">오늘의 타임라인 저장</div>
       <div class="sec-box">
-        <div class="sec-row" style="gap:12px">
+        <div class="sec-row">
           <div style="flex:1">
             <div style="font-size:14px;font-weight:500">이미지로 저장</div>
-            <div style="font-size:12px;color:var(--text3);margin-top:2px">미리보기 후 저장</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px">PNG로 저장 / 공유</div>
           </div>
-          <button class="tb-btn" id="btn-preview" style="background:var(--bg3)">
+          <button class="tb-btn" id="btn-preview" style="background:var(--bg3);margin-right:6px">
             <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
           <button class="tb-btn" id="btn-export" style="background:var(--accent);color:var(--bg)">
@@ -347,6 +346,7 @@ button,input,textarea{font-family:var(--font);cursor:pointer}
       <div class="mfield"><div class="mlabel">취침 시간</div><input type="time" class="minput" id="ws-sleep-input" style="font-family:var(--mono)"/></div>
     </div>
     <div class="mact">
+      <button class="mact-btn mb-s" id="m-ws-reset" style="color:#FF3B30;flex:0.8">재설정</button>
       <button class="mact-btn mb-s" id="m-ws-cancel">취소</button>
       <button class="mact-btn mb-p" id="m-ws-save"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>저장</button>
     </div>
@@ -370,6 +370,21 @@ button,input,textarea{font-family:var(--font);cursor:pointer}
   </div>
 </div>
 
+<!-- PREVIEW MODAL -->
+<div class="mback" id="m-preview">
+  <div class="msheet" style="max-height:92vh">
+    <div class="mhandle"></div>
+    <div class="mtitle"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>미리보기</div>
+    <div style="padding:0 14px 4px;overflow-y:auto;max-height:65vh">
+      <img id="preview-img" style="width:100%;border-radius:10px;display:block" src="" alt="미리보기"/>
+    </div>
+    <div class="mact">
+      <button class="mact-btn mb-s" id="m-preview-close">닫기</button>
+      <button class="mact-btn mb-p" id="m-preview-save"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- IMPORT MODAL -->
 <div class="mback" id="m-import">
   <div class="msheet">
@@ -387,32 +402,6 @@ button,input,textarea{font-family:var(--font);cursor:pointer}
   </div>
 </div>
 
-<!-- PREVIEW MODAL -->
-<div class="mback" id="m-preview">
-  <div class="msheet" style="max-height:92vh">
-    <div class="mhandle"></div>
-    <div class="mtitle"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>미리보기</div>
-    <div style="padding:0 16px 4px;overflow-y:auto;max-height:62vh">
-      <div id="preview-content" style="background:#fff;border-radius:10px;overflow:hidden;border:1px solid rgba(0,0,0,.08)"></div>
-    </div>
-    <div class="mact">
-      <button class="mact-btn mb-s" id="m-preview-close">닫기</button>
-      <button class="mact-btn mb-p" id="m-preview-save"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>저장</button>
-    </div>
-  </div>
-</div>
-
-<!-- 이미지 저장용 숨김 카드 -->
-<div id="cap-card" style="position:fixed;top:0;left:-9999px;width:390px;background:#FFFFFF;font-family:'Noto Sans KR',sans-serif;z-index:-1">
-  <div id="cap-head" style="padding:16px 18px 10px;border-bottom:1px solid rgba(0,0,0,.07)">
-    <div id="cap-dstr" style="font-size:17px;font-weight:600;color:#1C1C1E"></div>
-    <div id="cap-sub-row" style="display:flex;justify-content:space-between;align-items:center;margin-top:5px">
-      <div id="cap-wsinfo" style="font-size:11px;color:#6C6C6E;font-family:'DM Mono',monospace"></div>
-      <div id="cap-sum" style="font-size:11px;color:#AEAEB2;font-family:'DM Mono',monospace"></div>
-    </div>
-  </div>
-  <div id="cap-tl" style="padding:8px 14px 14px"></div>
-</div>
 
 <script>
 var HH=50;
@@ -630,6 +619,10 @@ function openWSModal(){
   openM('m-ws');
 }
 document.getElementById('m-ws-cancel').onclick=function(){closeM('m-ws');};
+document.getElementById('m-ws-reset').onclick=function(){
+  var ws=getWS();ws.wakeup=null;ws.sleep=null;
+  setWS(ws);closeM('m-ws');renderWS();renderTimeline();
+};
 document.getElementById('m-ws-save').onclick=function(){
   var ws=getWS();
   ws.wakeup=document.getElementById('ws-wakeup-input').value||null;
@@ -797,7 +790,7 @@ function renderCatList(){
     var cpId='cp-'+c.id;
     row.innerHTML='<div class="drag-handle"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg></div>'
       +'<div class="cp-wrap" id="'+cpId+'" style="background:'+c.color+'"><input type="color" value="'+c.color+'" data-cid="'+c.id+'"/></div>'
-      +'<input type="text" class="cat-name-edit" value="'+c.name+'" maxlength="20" style="flex:1;background:transparent;border:none;border-bottom:1px solid transparent;color:var(--text);font-size:14px;font-weight:500;padding:4px 2px;outline:none;font-family:var(--font)"/>'
+      +'<input type="text" class="cat-name-edit" value="'+c.name+'" maxlength="20" style="flex:1;min-width:0;background:transparent;border:none;border-bottom:1px solid transparent;color:var(--text);font-size:14px;font-weight:500;padding:4px 2px;outline:none;font-family:var(--font)"/>'
       +'<button class="db" data-del="'+c.id+'"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
     var ci=row.querySelector('input[type=color]');
     ci.addEventListener('input',function(){
@@ -806,9 +799,9 @@ function renderCatList(){
       save();refreshMainChips();
     });
     var ni=row.querySelector('.cat-name-edit');
-    ni.addEventListener('focus',function(){ni.style.cssText='flex:1;background:var(--bg3);border:none;border-radius:6px;color:var(--text);font-size:14px;font-weight:500;padding:4px 8px;outline:none;font-family:var(--font)';});
+    ni.addEventListener('focus',function(){ni.style.cssText='flex:1;min-width:0;background:var(--bg3);border:none;border-radius:6px;color:var(--text);font-size:14px;font-weight:500;padding:4px 8px;outline:none;font-family:var(--font)';});
     ni.addEventListener('blur',function(){
-      ni.style.cssText='flex:1;background:transparent;border:none;border-bottom:1px solid transparent;color:var(--text);font-size:14px;font-weight:500;padding:4px 2px;outline:none;font-family:var(--font)';
+      ni.style.cssText='flex:1;min-width:0;background:transparent;border:none;border-bottom:1px solid transparent;color:var(--text);font-size:14px;font-weight:500;padding:4px 2px;outline:none;font-family:var(--font)';
       var v=ni.value.trim();if(!v){ni.value=c.name;return;}
       var cat=getCat(c.id);if(cat){cat.name=v;save();refreshMainChips();}
     });
@@ -951,109 +944,216 @@ document.getElementById('m-import-ok').onclick=function(){
     });
     var existCatIds=(D.cats.list||[]).map(function(c){return c.id;});
     ((parsed.cats&&parsed.cats.list)||[]).forEach(function(c){if(existCatIds.indexOf(c.id)===-1)D.cats.list.push(c);});
-    Object.keys(parsed.ws||{}).forEach(function(k){if(!D.ws[k])D.ws[k]=parsed.ws[k];});
+    Object.keys(parsed.ws||{}).forEach(function(k){
+      if(!D.ws[k])D.ws[k]={};
+      var src=parsed.ws[k]||{};
+      // 기존에 없는 값만 가져옴 (있으면 기존 유지)
+      if(src.wakeup&&!D.ws[k].wakeup)D.ws[k].wakeup=src.wakeup;
+      if(src.sleep&&!D.ws[k].sleep)D.ws[k].sleep=src.sleep;
+    });
     save();msg.style.color='#34C759';msg.textContent='가져오기 완료!';
     setTimeout(function(){closeM('m-import');renderAll();},800);
   }catch(e){msg.style.color='#FF3B30';msg.textContent='오류: 올바른 형식이 아니에요.';}
 };
 
-// ── IMAGE CAPTURE ──
-function buildCapCard(){
+// ── IMAGE CAPTURE (Canvas API) ──
+function buildCanvas(){
   var entries=getEntries().filter(function(e){return e.end;});
   var ws=getWS();
-  if(!entries.length&&!ws.wakeup&&!ws.sleep){alert('저장할 기록이 없어요.');return false;}
+  if(!entries.length&&!ws.wakeup&&!ws.sleep){alert('저장할 기록이 없어요.');return null;}
+
   var sorted=[].concat(entries).sort(function(a,b){return toMin(a.start)-toMin(b.start);});
   var f=fmtDate(D.date);
   var tot=entries.reduce(function(a,e){return a+Math.max(toMin(e.end)-toMin(e.start),0);},0);
-  // 헤더
-  document.getElementById('cap-dstr').innerHTML=f.main;
-  document.getElementById('cap-sum').textContent='총 '+fmtDur(tot);
-  // 기상/취침 정보
-  var wsInfo='';
-  if(ws.wakeup)wsInfo+='☀️ '+ws.wakeup;
-  if(ws.wakeup&&ws.sleep)wsInfo+='  ';
-  if(ws.sleep)wsInfo+='🌙 '+ws.sleep;
-  document.getElementById('cap-wsinfo').textContent=wsInfo;
-  // 시간 범위
+
   var allMins=[];
   if(ws.wakeup)allMins.push(toMin(ws.wakeup));
   if(ws.sleep)allMins.push(toMin(ws.sleep));
   sorted.forEach(function(e){allMins.push(toMin(e.start));allMins.push(toMin(e.end));});
-  var firstMin=allMins.length?Math.min.apply(null,allMins):0;
-  var lastMin=allMins.length?Math.max.apply(null,allMins):1440;
+  var firstMin=Math.min.apply(null,allMins);
+  var lastMin=Math.max.apply(null,allMins);
   var rangeStart=Math.max(0,Math.floor((firstMin-15)/60)*60);
   var rangeEnd=Math.min(1440,Math.ceil((lastMin+15)/60)*60);
   var rangeMin=rangeEnd-rangeStart;
-  var CARD_W=390;var AW=44;
-  var TARGET_H=window.innerHeight*1.2;
-  var PPM=Math.min(Math.max((TARGET_H-72)/rangeMin,1.2),3.0);
+
+  var S=2;
+  var CW=390*S;
+  var AW=44*S;
+  var BW=CW-AW;
+  // 전날 취침 미리 계산해서 HDR 높이 결정
+  var prevKey2=(function(){var pd=new Date(D.date.getTime()-86400000);return pd.toISOString().slice(0,10);})();
+  var hasSleepRow=!!(((D.ws[prevKey2]||{}).sleep)&&ws.wakeup);
+  var HDR=(hasSleepRow?84:72)*S;
+  var PPM=Math.min(Math.max(2.0,(window.innerHeight*1.1-72)/rangeMin),3.5)*S;
   var TL_H=Math.round(rangeMin*PPM);
-  var BLOCK_W=CARD_W-AW-2;var PAD=3;
-  function cm2top(m){return Math.round((m-rangeStart)*PPM);}
-  var html='<div style="display:flex;height:'+TL_H+'px;position:relative">';
-  // 시간 축
-  html+='<div style="width:'+AW+'px;flex-shrink:0;position:relative">';
-  for(var m=rangeStart;m<=rangeEnd;m+=60){
-    html+='<div style="position:absolute;top:'+cm2top(m)+'px;right:6px;font-size:9px;color:#AEAEB2;font-family:DM Mono,monospace;transform:translateY(-50%);line-height:1;white-space:nowrap">'+pad(Math.floor(m/60))+':00</div>';
+  var CH=HDR+TL_H+16*S;
+
+  var canvas=document.createElement('canvas');
+  canvas.width=CW;canvas.height=CH;
+  var ctx=canvas.getContext('2d');
+
+  ctx.fillStyle='#FFFFFF';ctx.fillRect(0,0,CW,CH);
+
+  // 전날 취침 ~ 오늘 기상 수면 시간 계산
+  var prevKey=(function(){
+    var pd=new Date(D.date.getTime()-86400000);
+    return pd.toISOString().slice(0,10);
+  })();
+  var prevWS=D.ws[prevKey]||{};
+  var sleepDurText='';
+  if(prevWS.sleep&&ws.wakeup){
+    var sleepMin=toMin(ws.wakeup)-toMin(prevWS.sleep);
+    if(sleepMin<0)sleepMin+=1440; // 자정 넘긴 경우
+    sleepDurText='💤 '+fmtDur(sleepMin);
   }
-  if(ws.wakeup)html+='<div style="position:absolute;top:'+cm2top(toMin(ws.wakeup))+'px;right:3px;font-size:12px;line-height:1;transform:translateY(-50%)">☀️</div>';
-  if(ws.sleep)html+='<div style="position:absolute;top:'+cm2top(toMin(ws.sleep))+'px;right:3px;font-size:12px;line-height:1;transform:translateY(-50%)">🌙</div>';
-  html+='</div>';
-  // 블록 컬럼
-  html+='<div style="flex:1;position:relative;border-left:1px solid rgba(0,0,0,.07)">';
-  for(var m=rangeStart;m<=rangeEnd;m+=60){
-    html+='<div style="position:absolute;top:'+cm2top(m)+'px;left:0;right:0;height:1px;background:rgba(0,0,0,.07)"></div>';
+
+  // 헤더 - 날짜
+  ctx.fillStyle='#1C1C1E';
+  ctx.font='600 '+(17*S)+'px Noto Sans KR,sans-serif';
+  ctx.fillText(f.main.replace(/<[^>]+>/g,''),18*S,28*S);
+
+  // 헤더 2행 - 수면시간(왼쪽) + 총 활동시간(오른쪽)
+  ctx.font='400 '+(11*S)+'px sans-serif';
+  ctx.fillStyle='#6C6C6E';
+  ctx.fillText(sleepDurText||f.sub,18*S,46*S);
+  ctx.fillStyle='#AEAEB2';
+  ctx.font='400 '+(11*S)+'px DM Mono,monospace';
+  ctx.textAlign='right';
+  ctx.fillText('총 '+fmtDur(tot),(CW-18*S),46*S);
+  ctx.textAlign='left';
+
+  // 헤더 3행 - 기상/취침 시간 (수면시간이 있을 때만 추가)
+  if(sleepDurText&&(ws.wakeup||ws.sleep)){
+    ctx.font='400 '+(10*S)+'px sans-serif';
+    ctx.fillStyle='#AEAEB2';
+    var wsLine2='';
+    if(prevWS.sleep)wsLine2+='🌙 '+prevWS.sleep+' → ';
+    if(ws.wakeup)wsLine2+='☀️ '+ws.wakeup;
+    ctx.fillText(wsLine2,18*S,60*S);
   }
-  if(ws.wakeup)html+='<div style="position:absolute;top:'+cm2top(toMin(ws.wakeup))+'px;left:0;right:0;height:1.5px;background:#F59E0B;opacity:.6"></div>';
-  if(ws.sleep)html+='<div style="position:absolute;top:'+cm2top(toMin(ws.sleep))+'px;left:0;right:0;height:1.5px;background:#818CF8;opacity:.6"></div>';
-  layoutBlocks(entries).forEach(function(b){
+
+  ctx.strokeStyle='rgba(0,0,0,0.07)';ctx.lineWidth=1*S;
+  ctx.beginPath();ctx.moveTo(0,HDR-1*S);ctx.lineTo(CW,HDR-1*S);ctx.stroke();
+
+  function m2y(m){return HDR+Math.round((m-rangeStart)*PPM);}
+
+  ctx.strokeStyle='rgba(0,0,0,0.07)';ctx.lineWidth=1;
+  ctx.fillStyle='#AEAEB2';
+  ctx.font='400 '+(9*S)+'px DM Mono,monospace';
+  ctx.textAlign='right';
+  for(var m=rangeStart;m<=rangeEnd;m+=60){
+    var y=m2y(m);
+    ctx.beginPath();ctx.moveTo(AW,y);ctx.lineTo(CW,y);ctx.stroke();
+    ctx.fillText(pad(Math.floor(m/60))+':00',AW-6*S,y+4*S);
+  }
+  ctx.textAlign='left';
+
+  ctx.strokeStyle='rgba(0,0,0,0.1)';ctx.lineWidth=1*S;
+  ctx.beginPath();ctx.moveTo(AW,HDR);ctx.lineTo(AW,HDR+TL_H);ctx.stroke();
+
+  // 기상/취침 선 + 이모지 + 시간 레이블
+  function drawWSLine(t,emoji,timeStr,color){
+    var y=m2y(toMin(t));
+    // 가로선
+    ctx.strokeStyle=color;ctx.globalAlpha=0.7;ctx.lineWidth=1.5*S;
+    ctx.beginPath();ctx.moveTo(AW,y);ctx.lineTo(CW,y);ctx.stroke();
+    ctx.globalAlpha=1;
+    // 이모지 (시스템 폰트로 그려야 iOS에서 표시됨)
+    ctx.font=(12*S)+'px sans-serif';
+    ctx.fillStyle=color;
+    ctx.textAlign='left';
+    ctx.fillText(emoji,AW+4*S,y-4*S);
+    // 시간 텍스트
+    ctx.font='500 '+(9*S)+'px DM Mono,monospace';
+    ctx.fillText(timeStr,AW+18*S,y-4*S);
+    ctx.textAlign='left';
+  }
+  if(ws.wakeup)drawWSLine(ws.wakeup,'☀️',ws.wakeup,'#F59E0B');
+  if(ws.sleep)drawWSLine(ws.sleep,'🌙',ws.sleep,'#818CF8');
+
+  var PAD=3*S;
+  var laid=layoutBlocks(sorted);
+  laid.forEach(function(b){
     var en=b.entry;var cat=getCat(en.catId);var col=cat?cat.color:'#888';
     var dur=b.em-b.sm;
-    var top=cm2top(b.sm);var bh=Math.max(Math.round(dur*PPM),20);
-    var bw=Math.floor((BLOCK_W-PAD*(b.cols+1))/b.cols);
-    var bl=PAD+b.col*(bw+PAD);
+    var y=m2y(b.sm);
+    var bh=Math.max(Math.round(dur*PPM),20*S);
+    var bw=Math.floor((BW-PAD*(b.cols+1))/b.cols);
+    var bx=AW+PAD+b.col*(bw+PAD);
     var r=parseInt(col.slice(1,3),16),g=parseInt(col.slice(3,5),16),bv=parseInt(col.slice(5,7),16);
-    html+='<div style="position:absolute;top:'+top+'px;height:'+bh+'px;left:'+bl+'px;width:'+bw+'px;border-radius:6px;background:rgba('+r+','+g+','+bv+',.15);border-left:3px solid '+col+';padding:3px 6px;overflow:hidden;display:flex;flex-direction:column;justify-content:center">'
-      +'<div style="font-size:11px;font-weight:600;color:'+col+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3">'+en.task+'</div>'
-      +(bh>=26?'<div style="font-size:9px;color:'+col+';opacity:.7;font-family:DM Mono,monospace;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+en.start+' – '+en.end+' · '+fmtDur(dur)+'</div>':'')
-      +(bh>=42&&en.memo?'<div style="font-size:9px;color:'+col+';opacity:.55;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+en.memo+'</div>':'')
-      +'</div>';
+    ctx.fillStyle='rgba('+r+','+g+','+bv+',.15)';
+    roundRect(ctx,bx,y+1,bw,bh-2,5*S);ctx.fill();
+    ctx.fillStyle=col;
+    roundRect(ctx,bx,y+1,3*S,bh-2,2*S);ctx.fill();
+    ctx.fillStyle=col;
+    var tx=bx+6*S;
+    if(bh>=26*S){
+      ctx.font='600 '+(11*S)+'px Noto Sans KR,sans-serif';
+      ctx.fillText(truncate(ctx,en.task,bw-10*S),tx,y+15*S);
+      ctx.globalAlpha=0.7;
+      ctx.font='400 '+(9*S)+'px DM Mono,monospace';
+      ctx.fillText(en.start+' – '+en.end+' · '+fmtDur(dur),tx,y+27*S);
+      ctx.globalAlpha=1;
+      if(bh>=42*S&&en.memo){
+        ctx.globalAlpha=0.55;
+        ctx.font='400 '+(9*S)+'px DM Mono,monospace';
+        ctx.fillText(truncate(ctx,en.memo,bw-10*S),tx,y+38*S);
+        ctx.globalAlpha=1;
+      }
+    }else{
+      ctx.font='600 '+(10*S)+'px Noto Sans KR,sans-serif';
+      ctx.fillText(truncate(ctx,en.task,bw-8*S),tx,y+bh/2+4*S);
+    }
   });
-  html+='</div></div>';
-  document.getElementById('cap-tl').innerHTML=html;
-  return true;
+
+  return canvas;
 }
-function doSave(){
-  var card=document.getElementById('cap-card');
-  setTimeout(function(){
-    if(typeof html2canvas==='undefined'){alert('이미지 라이브러리 로딩 중이에요. 잠시 후 다시 눌러주세요.');return;}
-    html2canvas(card,{scale:2,useCORS:true,backgroundColor:'#FFFFFF',logging:false}).then(function(canvas){
-      var filename='timeline-'+dkey(D.date)+'.png';
-      canvas.toBlob(function(blob){
-        if(navigator.share&&navigator.canShare&&navigator.canShare({files:[new File([blob],'x.png',{type:'image/png'})]})){
-          navigator.share({files:[new File([blob],filename,{type:'image/png'})],title:'데일리 타임라인'}).catch(function(){});
-        }else{
-          var url=URL.createObjectURL(blob);var a=document.createElement('a');
-          a.href=url;a.download=filename;document.body.appendChild(a);a.click();
-          setTimeout(function(){URL.revokeObjectURL(url);document.body.removeChild(a);},1000);
-        }
-      },'image/png');
-    }).catch(function(e){alert('저장 실패: '+e.message);});
-  },300);
+
+function shareOrDownload(blob){
+  var filename='timeline-'+dkey(D.date)+'.png';
+  if(navigator.share&&navigator.canShare&&navigator.canShare({files:[new File([blob],'x.png',{type:'image/png'})]})){
+    navigator.share({files:[new File([blob],filename,{type:'image/png'})],title:'데일리 타임라인'}).catch(function(){});
+  }else{
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;a.download=filename;
+    document.body.appendChild(a);a.click();
+    setTimeout(function(){URL.revokeObjectURL(url);document.body.removeChild(a);},1000);
+  }
 }
+
+// 미리보기 버튼 → canvas → img로 모달에 표시
 document.getElementById('btn-preview').onclick=function(){
-  if(!buildCapCard())return;
-  var src=document.getElementById('cap-card');
-  document.getElementById('preview-content').innerHTML=src.innerHTML;
+  var canvas=buildCanvas();if(!canvas)return;
+  document.getElementById('preview-img').src=canvas.toDataURL('image/png');
   openM('m-preview');
 };
-document.getElementById('btn-export').onclick=function(){
-  if(!buildCapCard())return;
-  doSave();
-};
-document.getElementById('m-preview-close').onclick=function(){closeM('m-preview');};
-document.getElementById('m-preview-save').onclick=function(){closeM('m-preview');setTimeout(doSave,100);};
 
+// 저장 버튼 → canvas → blob → 공유/다운로드
+document.getElementById('btn-export').onclick=function(){
+  var canvas=buildCanvas();if(!canvas)return;
+  canvas.toBlob(function(blob){shareOrDownload(blob);},'image/png');
+};
+
+document.getElementById('m-preview-close').onclick=function(){closeM('m-preview');};
+document.getElementById('m-preview-save').onclick=function(){
+  var canvas=buildCanvas();if(!canvas)return;
+  closeM('m-preview');
+  canvas.toBlob(function(blob){shareOrDownload(blob);},'image/png');
+};
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
+}
+function truncate(ctx,text,maxW){
+  if(ctx.measureText(text).width<=maxW)return text;
+  while(text.length>0&&ctx.measureText(text+'…').width>maxW)text=text.slice(0,-1);
+  return text+'…';
+}
 // ── RENDER ALL ──
 function renderAll(){
   refreshMainChips();
