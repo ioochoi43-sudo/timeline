@@ -342,11 +342,22 @@ button,input,textarea{font-family:var(--font);cursor:pointer}
     <div class="mhandle"></div>
     <div class="mtitle">☀️ 기상 / 🌙 취침 수정</div>
     <div class="mbody">
-      <div class="mfield"><div class="mlabel">기상 시간</div><input type="time" class="minput" id="ws-wakeup-input" style="font-family:var(--mono)"/></div>
-      <div class="mfield"><div class="mlabel">취침 시간</div><input type="time" class="minput" id="ws-sleep-input" style="font-family:var(--mono)"/></div>
+      <div class="mfield">
+        <div class="mlabel">기상 시간</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="time" class="minput" id="ws-wakeup-input" style="font-family:var(--mono);flex:1"/>
+          <button class="mact-btn mb-s" id="m-ws-reset-wakeup" style="flex:0;padding:0 12px;height:44px;font-size:13px;color:#FF3B30">삭제</button>
+        </div>
+      </div>
+      <div class="mfield">
+        <div class="mlabel">취침 시간</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="time" class="minput" id="ws-sleep-input" style="font-family:var(--mono);flex:1"/>
+          <button class="mact-btn mb-s" id="m-ws-reset-sleep" style="flex:0;padding:0 12px;height:44px;font-size:13px;color:#FF3B30">삭제</button>
+        </div>
+      </div>
     </div>
     <div class="mact">
-      <button class="mact-btn mb-s" id="m-ws-reset" style="color:#FF3B30;flex:0.8">재설정</button>
       <button class="mact-btn mb-s" id="m-ws-cancel">취소</button>
       <button class="mact-btn mb-p" id="m-ws-save"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>저장</button>
     </div>
@@ -619,8 +630,12 @@ function openWSModal(){
   openM('m-ws');
 }
 document.getElementById('m-ws-cancel').onclick=function(){closeM('m-ws');};
-document.getElementById('m-ws-reset').onclick=function(){
-  var ws=getWS();ws.wakeup=null;ws.sleep=null;
+document.getElementById('m-ws-reset-wakeup').onclick=function(){
+  var ws=getWS();ws.wakeup=null;
+  setWS(ws);closeM('m-ws');renderWS();renderTimeline();
+};
+document.getElementById('m-ws-reset-sleep').onclick=function(){
+  var ws=getWS();ws.sleep=null;
   setWS(ws);closeM('m-ws');renderWS();renderTimeline();
 };
 document.getElementById('m-ws-save').onclick=function(){
@@ -678,19 +693,25 @@ function renderTimeline(){
     emp.innerHTML='<div style="font-size:28px;margin-bottom:8px">✏️</div><div style="font-size:14px">아직 기록이 없어요</div>';
     layer.appendChild(emp);return;
   }
-  // 기상/취침 마커
+  // 기상/취침 마커 (이모지 + 시간)
   if(ws.wakeup){
     var wt=m2top(toMin(ws.wakeup));
     var wb=document.createElement('div');
-    wb.style.cssText='position:absolute;top:'+wt+'px;left:-48px;right:0;z-index:6;pointer-events:none;display:flex;align-items:center;height:16px;transform:translateY(-50%)';
-    wb.innerHTML='<div style="width:48px;flex-shrink:0;text-align:right;padding-right:6px;font-size:12px;line-height:1">☀️</div><div style="flex:1;height:1.5px;background:#F59E0B;opacity:.7;border-radius:1px"></div>';
+    wb.style.cssText='position:absolute;top:'+wt+'px;left:-48px;right:0;z-index:6;pointer-events:none;display:flex;align-items:center;height:18px;transform:translateY(-50%)';
+    wb.innerHTML='<div style="width:48px;flex-shrink:0;text-align:right;padding-right:6px;font-size:11px;line-height:1">☀️</div>'
+      +'<div style="flex:1;height:1.5px;background:#F59E0B;opacity:.7;border-radius:1px;position:relative">'
+      +'<span style="position:absolute;left:4px;top:-9px;font-size:10px;font-weight:600;color:#F59E0B;font-family:var(--mono);white-space:nowrap">'+ws.wakeup+'</span>'
+      +'</div>';
     layer.appendChild(wb);
   }
   if(ws.sleep){
     var slt=m2top(toMin(ws.sleep));
     var slb=document.createElement('div');
-    slb.style.cssText='position:absolute;top:'+slt+'px;left:-48px;right:0;z-index:6;pointer-events:none;display:flex;align-items:center;height:16px;transform:translateY(-50%)';
-    slb.innerHTML='<div style="width:48px;flex-shrink:0;text-align:right;padding-right:6px;font-size:12px;line-height:1">🌙</div><div style="flex:1;height:1.5px;background:#818CF8;opacity:.7;border-radius:1px"></div>';
+    slb.style.cssText='position:absolute;top:'+slt+'px;left:-48px;right:0;z-index:6;pointer-events:none;display:flex;align-items:center;height:18px;transform:translateY(-50%)';
+    slb.innerHTML='<div style="width:48px;flex-shrink:0;text-align:right;padding-right:6px;font-size:11px;line-height:1">🌙</div>'
+      +'<div style="flex:1;height:1.5px;background:#818CF8;opacity:.7;border-radius:1px;position:relative">'
+      +'<span style="position:absolute;left:4px;top:-9px;font-size:10px;font-weight:600;color:#818CF8;font-family:var(--mono);white-space:nowrap">'+ws.sleep+'</span>'
+      +'</div>';
     layer.appendChild(slb);
   }
   // 진행 중
@@ -807,9 +828,13 @@ function renderCatList(){
     });
     ni.addEventListener('keydown',function(e){if(e.key==='Enter')ni.blur();});
     row.querySelector('[data-del]').onclick=function(){
-      D.cats.list=D.cats.list.filter(function(x){return x.id!==c.id;});
-      if(D.selCat===c.id)D.selCat=D.cats.list[0]?D.cats.list[0].id:null;
-      save();renderCatList();refreshMainChips();
+      D.confirmCb=function(){
+        D.cats.list=D.cats.list.filter(function(x){return x.id!==c.id;});
+        if(D.selCat===c.id)D.selCat=D.cats.list[0]?D.cats.list[0].id:null;
+        save();renderCatList();refreshMainChips();
+      };
+      document.getElementById('m-conf-sub').textContent='"'+c.name+'" 카테고리를 삭제할까요?';
+      openM('m-confirm');
     };
     initDrag(row,el);
     el.appendChild(row);
